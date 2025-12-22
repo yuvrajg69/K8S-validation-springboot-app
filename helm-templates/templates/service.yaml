@@ -1,0 +1,15 @@
+{{ $root := . }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.service.name | default $root.Values.service.name }}
+  namespace: {{ .Values.app.namespace | default $root.Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name | default $root.Values.app.name }}
+spec:
+  selector:
+    app: {{ .Values.app.name | default $root.Values.app.name }}
+  ports:
+    - protocol: TCP
+      port: {{ .Values.service.port | default $root.Values.service.port }}
+      targetPort: {{ .Values.container.port | default $root.Values.container.port }}

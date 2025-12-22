@@ -1,0 +1,67 @@
+{{- $root := . -}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.app.name }}
+  namespace: {{ .Values.app.namespace }}
+  labels:
+    app: {{ .Values.app.name }}
+    {{- with (.Values.helmLabels.label | default $root.Values.helmLabels.label) }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.app.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.app.name }}
+        {{- with (.Values.helmLabels.selector | default $root.Values.helmLabels.selector) }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      volumes:
+        - name: tls-volume
+          secret:
+            secretName: {{ .Values.tls.secretName }}
+
+      containers:
+        - name: {{ .Values.app.name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: {{ .Values.container.port }}
+          volumeMounts:
+            - name: tls-volume
+              mountPath: {{ .Values.tls.mountPath }}
+              readOnly: true
+          command: {{ toJson .Values.command }}
+          args: {{ toJson .Values.args }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+
+      {{- /* nodeSelector only if non-empty */}}
+      {{- $ns := .Values.nodeSelector | default $root.Values.nodeSelector -}}
+      {{- if and $ns (kindIs "map" $ns) (gt (len $ns) 0) }}
+      nodeSelector:
+        {{- toYaml $ns | nindent 8 }}
+      {{- end }}
+
+      {{- /* affinity only if non-empty */}}
+      {{- $aff := .Values.affinity | default $root.Values.affinity -}}
+      {{- if and $aff (kindIs "map" $aff) (gt (len $aff) 0) }}
+      affinity:
+        {{- toYaml $aff | nindent 8 }}
+      {{- end }}
+
+      {{- /* tolerations only if non-empty */}}
+      {{- $tol := .Values.tolerations | default $root.Values.tolerations -}}
+      {{- if and $tol (kindIs "slice" $tol) (gt (len $tol) 0) }}
+      tolerations:
+        {{- toYaml $tol | nindent 8 }}
+      {{- end }}
