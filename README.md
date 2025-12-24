@@ -1,6 +1,6 @@
 # Kubernetes ECR Image Validation Webhook
 
-A Kubernetes Validating Admission Webhook built with Spring Boot that validates container images exist in Amazon ECR before allowing pod deployments.
+A Kubernetes Validating Admission Webhook built with Spring Boot that verifies container images exist in AWS ECR before allowing pod deployments. Automatically scales Argo Rollouts to 0 on validation failure to prevent unnecessary resource consumption.
 
 ## Overview
 
